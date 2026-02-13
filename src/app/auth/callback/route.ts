@@ -3,8 +3,16 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies()  
+  const { searchParams } = new URL(request.url)
+  const code = searchParams.get('code')
 
+  // No code? Redirect to login with error
+  if (!code) {
+    return NextResponse.redirect(new URL('/login?error=no_code', request.url))
+  }
+
+  // Got code — exchange it for a session
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,15 +22,22 @@ export async function GET(request: Request) {
           return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options)
-          )
+          })
         },
       },
     }
   )
 
-  await supabase.auth.exchangeCodeForSession(request.url)
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
 
+  if (error) {
+    return NextResponse.redirect(
+      new URL(`/login?error=${error.message}`, request.url)
+    )
+  }
+
+  // Success! Send them home
   return NextResponse.redirect(new URL('/', request.url))
 }
