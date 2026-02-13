@@ -1,26 +1,27 @@
 "use client"
 
 import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
 export default function HomePage() {
+  const router = useRouter()
 
   useEffect(() => {
-    const testConnection = async () => {
-      const { data, error } = await supabase
-        .from("bookmarks")   // your real table
-        .select("*")
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
 
-      console.log("DATA:", data)
-      console.log("ERROR:", error)
+      if (!session) {
+        router.push("/login")
+      }
     }
 
-    testConnection()
-  }, [])
+    checkUser()
+  }, [router])
 
   return (
     <div>
-      <h1>Check browser console</h1>
+      <h1>Home Page</h1>
     </div>
   )
 }
