@@ -25,7 +25,7 @@ export default function BookmarksPage() {
       const { data, error: fetchError } = await supabase
         .from('bookmarks')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false})
 
       if (fetchError) throw fetchError
 
@@ -133,7 +133,6 @@ export default function BookmarksPage() {
     setBookmarkToDelete(null)
   }
 
-  // Function to truncate URL
   const truncateUrl = (url: string, maxLength: number = 60) => {
     if (url.length <= maxLength) return url
     return url.substring(0, maxLength) + '...'
@@ -141,31 +140,31 @@ export default function BookmarksPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-400">Loading bookmarks...</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400 text-sm sm:text-base">Loading bookmarks...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12">
+    <div className="min-h-[calc(100vh-4rem)] py-6 sm:py-12">
       <div className="max-w-4xl mx-auto px-4">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">My Bookmarks</h1>
-            <p className="text-slate-400">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">My Bookmarks</h1>
+            <p className="text-slate-400 text-sm sm:text-base">
               {bookmarks.length} {bookmarks.length === 1 ? 'bookmark' : 'bookmarks'} saved
             </p>
           </div>
           
           <button
             onClick={() => router.push("/add-bookmark")}
-            className="px-6 py-3 bg-linear-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-linear-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -176,22 +175,22 @@ export default function BookmarksPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
-            <p className="text-sm text-red-400">{error}</p>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
+            <p className="text-xs sm:text-sm text-red-400">{error}</p>
           </div>
         )}
 
         {/* Bookmarks List */}
         {bookmarks.length === 0 ? (
-          <div className="text-center py-16 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-            <svg className="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-12 sm:py-16 bg-slate-800/50 rounded-2xl border border-slate-700/50">
+            <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
-            <p className="text-slate-400 text-lg mb-4">No bookmarks yet</p>
-            <p className="text-slate-500 text-sm mb-6">Start saving your favorite links</p>
+            <p className="text-slate-400 text-base sm:text-lg mb-2 sm:mb-4 px-4">No bookmarks yet</p>
+            <p className="text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6 px-4">Start saving your favorite links</p>
             <button
               onClick={() => router.push("/add-bookmark")}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
               Add Your First Bookmark
             </button>
@@ -201,25 +200,25 @@ export default function BookmarksPage() {
             {bookmarks.map((bookmark) => (
               <div
                 key={bookmark.id}
-                className="group p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800/70 hover:border-slate-600 transition-all duration-200"
+                className="group p-4 sm:p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800/70 hover:border-slate-600 transition-all duration-200"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-semibold text-white mb-2">
+                    <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 line-clamp-2">
                       {bookmark.title}
                     </h3>
                     <a
                       href={bookmark.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors block"
+                      className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors block break-all sm:break-normal"
                       onClick={(e) => e.stopPropagation()}
                       title={bookmark.url}
                     >
                       {truncateUrl(bookmark.url)}
                     </a>
-                    <p className="text-xs text-slate-500 mt-3">
+                    <p className="text-xs text-slate-500 mt-2 sm:mt-3">
                       Added on {new Date(bookmark.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -229,25 +228,25 @@ export default function BookmarksPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
                     <a
                       href={bookmark.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                      className="p-2 sm:p-2.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
                       title="Open link"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </a>
                     
                     <button
                       onClick={() => handleDelete(bookmark.id)}
-                      className="p-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                      className="p-2 sm:p-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                       title="Delete bookmark"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -263,31 +262,31 @@ export default function BookmarksPage() {
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 max-w-md w-full shadow-2xl">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-slate-800 rounded-2xl border border-slate-700 p-4 sm:p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-start gap-3 sm:gap-4 mb-4">
+              <div className="p-2 sm:p-3 bg-red-500/10 rounded-full shrink-0">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-white mb-2">Delete Bookmark?</h3>
-                <p className="text-slate-400 text-sm">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Delete Bookmark?</h3>
+                <p className="text-slate-400 text-xs sm:text-sm">
                   Are you sure you want to delete this bookmark? This action cannot be undone.
                 </p>
               </div>
             </div>
             
-            <div className="flex gap-3 justify-end mt-6">
+            <div className="flex gap-2 sm:gap-3 justify-end mt-4 sm:mt-6">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors font-medium"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors font-medium text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm sm:text-base"
               >
                 Delete
               </button>
