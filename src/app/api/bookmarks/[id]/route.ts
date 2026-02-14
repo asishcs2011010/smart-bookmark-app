@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // DELETE /api/bookmarks/[id] - Delete a bookmark
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies()
 
@@ -36,7 +36,7 @@ export async function DELETE(
     )
   }
 
-  const { id } = params
+  const { id } = await params
 
   // Delete bookmark (only if it belongs to the user)
   const { error } = await supabase
@@ -61,7 +61,7 @@ export async function DELETE(
 // PUT /api/bookmarks/[id] - Update a bookmark
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies()
 
@@ -92,7 +92,7 @@ export async function PUT(
     )
   }
 
-  const { id } = params
+  const { id } = await params
 
   // Parse request body
   const body = await request.json()
