@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { validateUrlFormat } from './validation'
@@ -13,11 +13,11 @@ export default function AddBookmarkPage() {
   const [error, setError] = useState("")
   const [urlError, setUrlError] = useState("")
   const [isCheckingUrl, setIsCheckingUrl] = useState(false)
+  const [isUrlValid, setIsUrlValid] = useState(false)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const checkUrlReachability = async (urlToCheck: string): Promise<{ reachable: boolean; error: string }> => {
     try {
-      setIsCheckingUrl(true)
-      
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 8000)
 
@@ -46,39 +46,79 @@ export default function AddBookmarkPage() {
       }
     } catch (error) {
       return { reachable: false, error: 'Unable to verify URL reachability' }
-    } finally {
-      setIsCheckingUrl(false)
     }
   }
 
-  const handleUrlBlur = async () => {
-    if (!url.trim()) {
+  const validateUrl = async (urlToValidate: string) => {
+    if (!urlToValidate.trim()) {
       setUrlError("")
+      setIsUrlValid(false)
+      setIsCheckingUrl(false)
       return
     }
 
-    const validation = validateUrlFormat(url)
+    // First validate format
+    const validation = validateUrlFormat(urlToValidate)
     
     if (!validation.isValid) {
       setUrlError(validation.error)
+      setIsUrlValid(false)
+      setIsCheckingUrl(false)
       return
     }
 
+    // Then check reachability
     setUrlError("")
+    setIsCheckingUrl(true)
+    
     const result = await checkUrlReachability(validation.correctedUrl)
     
     if (!result.reachable) {
       setUrlError(result.error)
+      setIsUrlValid(false)
+    } else {
+      setUrlError("")
+      setIsUrlValid(true)
     }
+    
+    setIsCheckingUrl(false)
   }
+
+  // Debounced validation effect
+  useEffect(() => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    // Don't validate empty URL
+    if (!url.trim()) {
+      setUrlError("")
+      setIsUrlValid(false)
+      setIsCheckingUrl(false)
+      return
+    }
+
+    // Set new timer - validate after user stops typing for 800ms
+    debounceTimerRef.current = setTimeout(() => {
+      validateUrl(url)
+    }, 800)
+
+    // Cleanup
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [url])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setUrlError("")
     setLoading(true)
 
     try {
+      // Validate format
       const validation = validateUrlFormat(url)
       
       if (!validation.isValid) {
@@ -89,15 +129,17 @@ export default function AddBookmarkPage() {
 
       const finalUrl = validation.correctedUrl
 
-      const reachabilityResult = await checkUrlReachability(finalUrl)
-      
-      if (!reachabilityResult.reachable) {
-        setUrlError(reachabilityResult.error)
-        setError("Cannot add bookmark: " + reachabilityResult.error)
-        setLoading(false)
-        return
+      // If we haven't validated yet or validation failed, check again
+      if (!isUrlValid) {
+        const reachabilityResult = await checkUrlReachability(finalUrl)
+        if (!reachabilityResult.reachable) {
+          setUrlError(reachabilityResult.error)
+          setLoading(false)
+          return
+        }
       }
 
+      // Save to database
       const { data, error: supabaseError } = await supabase
         .from('bookmarks')
         .insert({ title: title.trim(), url: finalUrl })
@@ -168,19 +210,26 @@ export default function AddBookmarkPage() {
                 onChange={(e) => {
                   setUrl(e.target.value)
                   setUrlError("")
+                  setIsUrlValid(false)
                 }}
-                onBlur={handleUrlBlur}
                 placeholder="example.com or https://example.com"
                 required
                 className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-800 border ${
-                  urlError ? 'border-red-500' : 'border-slate-700'
+                  urlError ? 'border-red-500' : isUrlValid ? 'border-green-500' : 'border-slate-700'
                 } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 ${
-                  urlError ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+                  urlError ? 'focus:ring-red-500' : isUrlValid ? 'focus:ring-green-500' : 'focus:ring-blue-500'
                 } focus:border-transparent transition-all text-sm sm:text-base`}
               />
               {isCheckingUrl && (
                 <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2">
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              {isUrlValid && !isCheckingUrl && (
+                <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
                 </div>
               )}
             </div>
@@ -191,6 +240,13 @@ export default function AddBookmarkPage() {
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span className="wrap-break-word">{urlError}</span>
+              </p>
+            ) : isUrlValid ? (
+              <p className="text-xs sm:text-sm text-green-400 mt-1 flex items-center gap-1">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                URL is valid and reachable
               </p>
             ) : (
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -208,7 +264,7 @@ export default function AddBookmarkPage() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
             <button
               type="submit"
-              disabled={loading || isCheckingUrl}
+              disabled={loading || isCheckingUrl || !isUrlValid}
               className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-linear-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base order-2 sm:order-1"
             >
               {loading ? "Adding..." : isCheckingUrl ? "Validating..." : "Add Bookmark"}
