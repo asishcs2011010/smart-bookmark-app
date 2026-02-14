@@ -49,7 +49,7 @@ A modern, real-time bookmark management application built with Next.js, Supabase
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/smart-bookmark-app.git
+git clone https://github.com/asishcs2011010/smart-bookmark-app.git
 cd smart-bookmark-app
 ```
 
@@ -329,9 +329,9 @@ MIT License - feel free to use this project for learning purposes.
 
 ## 👨‍💻 Author
 
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+Asish Sashank Reddy Chinasani
+- GitHub: [asishcs2011010](https://github.com/asishcs2011010)
+- LinkedIn: [Asish Sashank Reddy Chinasani](https://www.linkedin.com/in/asish-sashank-reddy-chinasani-8296a924b)
 
 ---
 
