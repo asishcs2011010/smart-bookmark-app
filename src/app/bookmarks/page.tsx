@@ -42,7 +42,6 @@ export default function BookmarksPage() {
     let isSubscribed = true
 
     const setupRealtimeSubscription = async () => {
-      // Verify user is authenticated
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -55,12 +54,10 @@ export default function BookmarksPage() {
       
       console.log('✅ User authenticated:', user.id)
       
-      // Fetch initial bookmarks
       await fetchBookmarks()
       
       if (!isSubscribed) return
       
-      // Subscribe to realtime changes
       channel = supabase
         .channel('bookmarks-changes-' + Date.now())
         .on(
@@ -97,7 +94,6 @@ export default function BookmarksPage() {
 
     setupRealtimeSubscription()
 
-    // Cleanup
     return () => {
       isSubscribed = false
       if (channel) {
@@ -123,11 +119,8 @@ export default function BookmarksPage() {
 
       if (deleteError) throw deleteError
 
-      // Close modal
       setDeleteModalOpen(false)
       setBookmarkToDelete(null)
-
-      // Realtime will handle state update
     } catch (err: any) {
       alert("Error deleting bookmark: " + err.message)
       setDeleteModalOpen(false)
@@ -138,6 +131,12 @@ export default function BookmarksPage() {
   const cancelDelete = () => {
     setDeleteModalOpen(false)
     setBookmarkToDelete(null)
+  }
+
+  // Function to truncate URL
+  const truncateUrl = (url: string, maxLength: number = 60) => {
+    if (url.length <= maxLength) return url
+    return url.substring(0, maxLength) + '...'
   }
 
   if (loading) {
@@ -214,10 +213,11 @@ export default function BookmarksPage() {
                       href={bookmark.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors break-all"
+                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors block"
                       onClick={(e) => e.stopPropagation()}
+                      title={bookmark.url}
                     >
-                      {bookmark.url}
+                      {truncateUrl(bookmark.url)}
                     </a>
                     <p className="text-xs text-slate-500 mt-3">
                       Added on {new Date(bookmark.created_at).toLocaleDateString('en-US', {

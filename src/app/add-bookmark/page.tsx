@@ -4,8 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
-import { validateUrlFormat } from './validation'
-
 export default function AddBookmarkPage() {
   const router = useRouter()
   const [title, setTitle] = useState("")
@@ -15,32 +13,83 @@ export default function AddBookmarkPage() {
   const [urlError, setUrlError] = useState("")
   const [isCheckingUrl, setIsCheckingUrl] = useState(false)
 
+  // Validate URL format
+  const validateUrlFormat = (inputUrl: string): { isValid: boolean; correctedUrl: string; error: string } => {
+    if (!inputUrl.trim()) {
+      return { isValid: false, correctedUrl: "", error: "URL is required" }
+    }
+
+    let urlToValidate = inputUrl.trim()
+
+    // Auto-add https:// if no protocol
+    if (!urlToValidate.startsWith('http://') && !urlToValidate.startsWith('https://')) {
+      urlToValidate = 'https://' + urlToValidate
+    }
+
+    // Check if it's a valid URL format
+    try {
+      const urlObj = new URL(urlToValidate)
+      
+      // Must have a valid protocol
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        return { isValid: false, correctedUrl: "", error: "URL must use http:// or https://" }
+      }
+
+      // Must have a hostname
+      if (!urlObj.hostname || urlObj.hostname === '') {
+        return { isValid: false, correctedUrl: "", error: "Invalid URL format" }
+      }
+
+      // Check for valid domain format (at least one dot or localhost)
+      if (!urlObj.hostname.includes('.') && urlObj.hostname !== 'localhost') {
+        return { isValid: false, correctedUrl: "", error: "Invalid domain name. Example: google.com" }
+      }
+
+      return { isValid: true, correctedUrl: urlToValidate, error: "" }
+    } catch (e) {
+      return { isValid: false, correctedUrl: "", error: "Invalid URL format. Example: google.com or https://google.com" }
+    }
+  }
+
   // Check if URL is reachable
-  const checkUrlReachability = async (urlToCheck: string): Promise<boolean> => {
+  const checkUrlReachability = async (urlToCheck: string): Promise<{ reachable: boolean; error: string }> => {
     try {
       setIsCheckingUrl(true)
       
-      // Use a simple fetch with no-cors mode to check if URL exists
-      // This won't work for all sites due to CORS, but it's a basic check
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
 
       try {
-        await fetch(urlToCheck, { 
+        // Try to fetch the URL with HEAD request
+        const response = await fetch(urlToCheck, { 
           method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal
+          mode: 'no-cors', // Avoid CORS issues
+          signal: controller.signal,
+          cache: 'no-store'
         })
+        
         clearTimeout(timeoutId)
-        return true
-      } catch (fetchError) {
+        
+        // In no-cors mode, we can't read the status, but if fetch succeeds, URL exists
+        return { reachable: true, error: '' }
+      } catch (fetchError: any) {
         clearTimeout(timeoutId)
-        // If CORS blocks us, we'll assume the URL might still be valid
-        // This is a limitation of client-side checking
-        return true
+        
+        // If it's an abort error, URL took too long
+        if (fetchError.name === 'AbortError') {
+          return { reachable: false, error: 'URL is taking too long to respond (timeout after 8 seconds)' }
+        }
+        
+        // If it's a network error, URL might not exist
+        if (fetchError.message.includes('Failed to fetch')) {
+          return { reachable: false, error: 'Unable to reach this URL. The site may be down or the URL is incorrect.' }
+        }
+        
+        // For other errors, we assume it might still work (CORS issues, etc.)
+        return { reachable: true, error: '' }
       }
     } catch (error) {
-      return false
+      return { reachable: false, error: 'Unable to verify URL reachability' }
     } finally {
       setIsCheckingUrl(false)
     }
@@ -62,10 +111,10 @@ export default function AddBookmarkPage() {
 
     // URL format is valid, now check if it's reachable
     setUrlError("")
-    const isReachable = await checkUrlReachability(validation.correctedUrl)
+    const result = await checkUrlReachability(validation.correctedUrl)
     
-    if (!isReachable) {
-      setUrlError("Warning: Unable to verify if this URL is reachable")
+    if (!result.reachable) {
+      setUrlError(result.error)
     }
   }
 
@@ -88,14 +137,14 @@ export default function AddBookmarkPage() {
       const finalUrl = validation.correctedUrl
 
       // Check if URL is reachable
-      const isReachable = await checkUrlReachability(finalUrl)
+      const reachabilityResult = await checkUrlReachability(finalUrl)
       
-      if (!isReachable) {
-        const confirmSave = confirm("Warning: Unable to verify if this URL is reachable. Do you want to save it anyway?")
-        if (!confirmSave) {
-          setLoading(false)
-          return
-        }
+      if (!reachabilityResult.reachable) {
+        // Show error and don't allow saving
+        setUrlError(reachabilityResult.error)
+        setError("Cannot add bookmark: " + reachabilityResult.error)
+        setLoading(false)
+        return
       }
 
       // Direct Supabase call
