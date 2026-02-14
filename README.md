@@ -2,7 +2,7 @@
 
 A modern, real-time bookmark management application built with Next.js, Supabase, and TypeScript. Save, organize, and access your favorite links from anywhere with instant synchronization across all your devices.
 
-🔗 **Live Demo:** [Your Vercel URL here]
+🔗 **Live Demo:** https://smart-bookmark-app-iota-seven.vercel.app
 
 ---
 
